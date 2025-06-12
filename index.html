@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glass Panel Order Tool - ViewRail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-6xl mx-auto p-4 min-h-screen">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="bg-blue-600 text-white p-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold flex items-center gap-2">
+                            <i data-lucide="calculator" class="h-8 w-8"></i>
+                            Glass Panel Order Tool
+                        </h1>
+                        <p class="text-blue-100 mt-2">Configure your custom Starphire glass panels</p>
+                    </div>
+                    <button onclick="showAdminLogin()" class="px-4 py-2 bg-blue-500 hover:bg-blue-400 rounded-md transition-colors flex items-center gap-2">
+                        <i data-lucide="settings" class="h-4 w-4"></i>
+                        Admin
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Configuration Panel -->
+                <div class="space-y-6">
+                    <!-- Dimensions -->
+                    <div class="border rounded-lg p-4">
+                        <h2 class="text-xl font-bold mb-4">Panel Dimensions</h2>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Width (inches)</label>
+                                <input type="number" id="width" class="w-full p-2 border rounded" placeholder="36" onchange="updateCalculations()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Height (inches)</label>
+                                <input type="number" id="height" class="w-full p-2 border rounded" placeholder="42" onchange="updateCalculations()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Quantity</label>
+                                <input type="number" id="quantity" class="w-full p-2 border rounded" value="1" min="1" onchange="updateCalculations()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Glass Type -->
+                    <div class="border rounded-lg p-4">
+                        <h2 class="text-xl font-bold mb-4">Glass Specifications</h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Thickness</label>
+                                <select id="thickness" class="w-full p-2 border rounded" onchange="updateGlassType()">
+                                    <option value="10">10mm</option>
+                                    <option value="12" selected>12mm</option>
+                                    <option value="19">19mm</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Type</label>
+                                <select id="glassType" class="w-full p-2 border rounded" onchange="updateCalculations()">
+                                    <option value="tempered">Starphire Tempered</option>
+                                    <option value="laminated">Starphire Laminated</option>
+                                </select>
+                                <p class="text-xs text-blue-600 mt-1">
+                                    <strong>Starphire:</strong> Premium low-iron glass with exceptional clarity
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quote Request Form -->
+                    <div class="border rounded-lg p-4">
+                        <h2 class="text-xl font-bold mb-4">Request Quote</h2>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="text" id="customerName" placeholder="Full Name *" class="p-2 border rounded" required>
+                                <input type="email" id="customerEmail" placeholder="Email Address *" class="p-2 border rounded" required>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <input type="text" id="customerCity" placeholder="City" class="p-2 border rounded">
+                                <input type="text" id="customerState" placeholder="State" class="p-2 border rounded" maxlength="2" onchange="updateCalculations()">
+                                <input type="text" id="customerZip" placeholder="ZIP" class="p-2 border rounded">
+                            </div>
+                            <button onclick="submitQuote()" class="w-full px-4 py-3 bg-blue-600 text-white rounded font-medium hover:bg-blue-700">
+                                Request Quote - <span id="totalPrice">$0.00</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview & Pricing -->
+                <div class="space-y-6">
+                    <!-- Pricing -->
+                    <div class="border rounded-lg p-4">
+                        <h2 class="text-xl font-bold mb-4">Price Breakdown</h2>
+                        <div class="space-y-2 text-sm" id="priceBreakdown">
+                            <!-- Dynamic pricing content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+            <h2 class="text-xl font-bold mb-4">Admin Access</h2>
+            <div class="space-y-4">
+                <input type="password" id="adminPassword" class="w-full p-2 border rounded" placeholder="Enter admin password">
+                <div id="passwordError" class="text-red-600 text-sm hidden">Incorrect password</div>
+                <div class="flex gap-2 justify-end">
+                    <button onclick="hideAdminLogin()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancel</button>
+                    <button onclick="loginAdmin()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Glass pricing configuration
+        const glassPrices = {
+            '10': { tempered: 8.50, laminated: 9.25 },
+            '12': { tempered: 10.75, laminated: 11.50 },
+            '19': { tempered: 15.25, laminated: 16.00 }
+        };
+
+        const shippingRegions = {
+            'IL,IN,IA,WI,MI,OH,MO,KS,NE': 250,
+            'CA,OR,WA,NV,AZ,UT,CO,NM,WY,MT,ID': 1000,
+            'FL,GA,AL,MS,TN,KY,NC,SC,VA,WV': 750,
+            'NY,PA,NJ,CT,MA,RI,VT,NH,ME,MD,DE': 750
+        };
+
+        function updateGlassType() {
+            const thickness = document.getElementById('thickness').value;
+            const glassTypeSelect = document.getElementById('glassType');
+            
+            // Clear existing options
+            glassTypeSelect.innerHTML = '';
+            
+            if (thickness === '10') {
+                glassTypeSelect.innerHTML = '<option value="tempered">Starphire Tempered</option>';
+            } else {
+                glassTypeSelect.innerHTML = `
+                    <option value="tempered">Starphire Tempered</option>
+                    <option value="laminated">Starphire Laminated</option>
+                `;
+            }
+            
+            updateCalculations();
+        }
+
+        function updateCalculations() {
+            const width = parseFloat(document.getElementById('width').value) || 0;
+            const height = parseFloat(document.getElementById('height').value) || 0;
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            const thickness = document.getElementById('thickness').value;
+            const glassType = document.getElementById('glassType').value;
+            const customerState = document.getElementById('customerState').value.toUpperCase();
+
+            const sqft = (width * height) / 144;
+            const basePrice = glassPrices[thickness][glassType] * sqft * quantity;
+            
+            let shippingFee = 250; // default
+            for (const [states, fee] of Object.entries(shippingRegions)) {
+                if (states.split(',').includes(customerState)) {
+                    shippingFee = fee;
+                    break;
+                }
+            }
+
+            const total = basePrice + shippingFee;
+
+            document.getElementById('priceBreakdown').innerHTML = `
+                <div class="flex justify-between">
+                    <span>Glass (${sqft.toFixed(2)} sq ft × ${quantity})</span>
+                    <span>$${basePrice.toFixed(2)}</span>
+                </div>
+                <div class="text-xs text-gray-500 ml-2">
+                    ${thickness}mm Starphire ${glassType} @ $${glassPrices[thickness][glassType].toFixed(2)}/sq ft
+                </div>
+                <div class="flex justify-between">
+                    <span>Shipping${customerState ? ` (${customerState})` : ''}</span>
+                    <span>$${shippingFee.toFixed(2)}</span>
+                </div>
+                <div class="border-t pt-2 flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+            `;
+
+            document.getElementById('totalPrice').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function submitQuote() {
+            const name = document.getElementById('customerName').value;
+            const email = document.getElementById('customerEmail').value;
+            
+            if (!name || !email) {
+                alert('Please fill in your name and email address.');
+                return;
+            }
+
+            const width = document.getElementById('width').value;
+            const height = document.getElementById('height').value;
+            const quantity = document.getElementById('quantity').value;
+            const thickness = document.getElementById('thickness').value;
+            const glassType = document.getElementById('glassType').value;
+            const total = document.getElementById('totalPrice').textContent;
+
+            const subject = `Glass Panel Quote Request - ${total}`;
+            const body = `
+Customer Information:
+Name: ${name}
+Email: ${email}
+City: ${document.getElementById('customerCity').value}
+State: ${document.getElementById('customerState').value}
+ZIP: ${document.getElementById('customerZip').value}
+
+Panel Specifications:
+Size: ${width}" × ${height}"
+Quantity: ${quantity}
+Glass Type: ${thickness}mm Starphire ${glassType}
+
+Total: ${total}
+            `;
+
+            window.location.href = `mailto:jj.johnson@viewrail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        function showAdminLogin() {
+            document.getElementById('adminModal').classList.remove('hidden');
+        }
+
+        function hideAdminLogin() {
+            document.getElementById('adminModal').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('passwordError').classList.add('hidden');
+        }
+
+        function loginAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'ViewRail2024!') {
+                alert('Admin features would be implemented here. For now, you can modify the glassPrices object in the JavaScript code.');
+                hideAdminLogin();
+            } else {
+                document.getElementById('passwordError').classList.remove('hidden');
+            }
+        }
+
+        // Initialize lucide icons
+        lucide.createIcons();
+        
+        // Initialize calculations
+        updateCalculations();
+    </script>
+</body>
+</html>
