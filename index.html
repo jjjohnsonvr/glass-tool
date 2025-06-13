@@ -52,7 +52,7 @@
                     <!-- Glass Type -->
                     <div class="border rounded-lg p-4">
                         <h2 class="text-xl font-bold mb-4">Glass Specifications</h2>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-3 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1">Thickness</label>
                                 <select id="thickness" class="w-full p-2 border rounded" onchange="updateGlassType()">
@@ -67,9 +67,33 @@
                                     <option value="tempered">Starphire Tempered</option>
                                     <option value="laminated">Starphire Laminated</option>
                                 </select>
-                                <p class="text-xs text-blue-600 mt-1">
-                                    <strong>Starphire:</strong> Premium low-iron glass with exceptional clarity
-                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Corners</label>
+                                <select id="cornerType" class="w-full p-2 border rounded" onchange="updatePreview()">
+                                    <option value="square">Square Corners</option>
+                                    <option value="rounded">Rounded Corners</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-600">
+                            <strong>Starphire:</strong> Premium low-iron glass with exceptional clarity
+                        </p>
+                    </div>
+
+                    <!-- Holes Configuration -->
+                    <div class="border rounded-lg p-4">
+                        <h2 class="text-xl font-bold mb-4">Holes & Cutouts</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-4">
+                                <button onclick="addHole()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2">
+                                    <i data-lucide="plus" class="h-4 w-4"></i>
+                                    Add Hole
+                                </button>
+                                <span class="text-sm text-gray-600">$25 per hole</span>
+                            </div>
+                            <div id="holesList" class="space-y-2">
+                                <!-- Dynamic holes list -->
                             </div>
                         </div>
                     </div>
@@ -100,11 +124,15 @@
                     <div class="border rounded-lg p-4">
                         <h2 class="text-xl font-bold mb-4">Panel Preview</h2>
                         <div class="bg-gray-100 rounded-lg p-4 flex items-center justify-center" style="height: 300px;">
-                            <div id="glassPreview" class="bg-blue-100 border-2 border-blue-300 rounded-lg shadow-lg relative" style="width: 150px; height: 200px; transition: all 0.3s ease;">
-                                <div class="absolute inset-2 bg-gradient-to-br from-blue-50 to-blue-100 rounded opacity-80"></div>
+                            <div id="glassPreview" class="bg-blue-100 border-2 border-blue-300 shadow-lg relative" style="width: 150px; height: 200px; transition: all 0.3s ease;">
+                                <div class="absolute inset-2 bg-gradient-to-br from-blue-50 to-blue-100 opacity-80"></div>
+                                <div id="holesContainer" class="absolute inset-0">
+                                    <!-- Dynamic holes will be added here -->
+                                </div>
                                 <div class="absolute bottom-2 left-2 text-xs font-medium text-blue-800">
                                     <div id="previewDimensions">36" × 42"</div>
                                     <div id="previewGlass">12mm Starphire Tempered</div>
+                                    <div id="previewCorners">Square Corners</div>
                                 </div>
                             </div>
                         </div>
@@ -210,6 +238,18 @@
                             <label class="block font-medium mb-1">Northeast ($)</label>
                             <input type="number" id="shipping-northeast" class="w-full p-2 border rounded" onchange="updateShipping()">
                             <p class="text-xs text-gray-500">NY, PA, NJ, CT, MA, RI, VT, NH, ME, MD, DE</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hole Pricing -->
+                <div class="bg-white border rounded-lg p-4">
+                    <h2 class="text-lg font-bold mb-4">Hole Pricing</h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block font-medium mb-1">Standard Hole Price ($)</label>
+                            <input type="number" id="hole-price" step="0.01" class="w-full p-2 border rounded" onchange="updateHolePricing()">
+                            <p class="text-xs text-gray-500">Price per hole, regardless of diameter</p>
                         </div>
                     </div>
                 </div>
