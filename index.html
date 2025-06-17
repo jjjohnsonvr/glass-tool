@@ -216,453 +216,454 @@
             </div>
         </div>
     </div>
+	<script>
+	// Configuration
+let glassPrices = {
+    '10': { tempered: 27.50, laminated: 9.25 },
+    '12': { tempered: 35.00, laminated: 72.00 },
+    '19': { tempered: 69.00, laminated: 110.00 }
+};
 
-    <script>
-        // Configuration
-        let glassPrices = {
-            '10': { tempered: 27.50, laminated: 9.25 },
-            '12': { tempered: 35.00, laminated: 72.00 },
-            '19': { tempered: 69.00, laminated: 110.00 }
-        };
+let shippingRegions = {
+    'IL,IN,IA,WI,MI,OH,MO,KS,NE': 250,
+    'CA,OR,WA,NV,AZ,UT,CO,NM,WY,MT,ID': 1000,
+    'FL,GA,AL,MS,TN,KY,NC,SC,VA,WV': 750,
+    'NY,PA,NJ,CT,MA,RI,VT,NH,ME,MD,DE': 750
+};
 
-        let shippingRegions = {
-            'IL,IN,IA,WI,MI,OH,MO,KS,NE': 250,
-            'CA,OR,WA,NV,AZ,UT,CO,NM,WY,MT,ID': 1000,
-            'FL,GA,AL,MS,TN,KY,NC,SC,VA,WV': 750,
-            'NY,PA,NJ,CT,MA,RI,VT,NH,ME,MD,DE': 750
-        };
+let holePrice = 25;
+let cornerPrice = 50;
 
-        let holePrice = 25;
-        let cornerPrice = 50;
+// Multiple panels support
+let panels = [];
+let activePanelIndex = 0;
 
-        // Multiple panels support
-        let panels = [];
-        let activePanelIndex = 0;
+// Initialize with first panel
+function initializePanels() {
+    panels = [{
+        id: Date.now(),
+        width: 36,
+        height: 42,
+        quantity: 1,
+        thickness: '12',
+        glassType: 'tempered',
+        cornerType: 'square',
+        holes: []
+    }];
+    renderPanelsList();
+    updateCalculations();
+    updatePreview();
+}
 
-        // Initialize with first panel
-        function initializePanels() {
-            panels = [{
-                id: Date.now(),
-                width: 36,
-                height: 42,
-                quantity: 1,
-                thickness: '12',
-                glassType: 'tempered',
-                cornerType: 'square',
-                holes: []
-            }];
+function addPanel() {
+    const newPanel = {
+        id: Date.now(),
+        width: 36,
+        height: 42,
+        quantity: 1,
+        thickness: '12',
+        glassType: 'tempered',
+        cornerType: 'square',
+        holes: []
+    };
+    panels.push(newPanel);
+    activePanelIndex = panels.length - 1;
+    renderPanelsList();
+    updateCalculations();
+    updatePreview();
+}
+
+function removePanel(panelId) {
+    if (panels.length <= 1) {
+        alert('You must have at least one panel.');
+        return;
+    }
+    
+    const panelIndex = panels.findIndex(p => p.id === panelId);
+    panels.splice(panelIndex, 1);
+    
+    if (activePanelIndex >= panels.length) {
+        activePanelIndex = panels.length - 1;
+    }
+    
+    renderPanelsList();
+    updateCalculations();
+    updatePreview();
+}
+
+function setActivePanel(panelIndex) {
+    activePanelIndex = panelIndex;
+    renderPanelsList();
+    updatePreview();
+}
+
+function updatePanel(panelId, property, value) {
+    const panel = panels.find(p => p.id === panelId);
+    if (panel) {
+        if (property === 'thickness') {
+            panel[property] = value;
+            // Update glass type options based on thickness
+            if (value === '10') {
+                panel.glassType = 'tempered';
+            }
+            // Re-render to update glass type options
             renderPanelsList();
-            updateCalculations();
+        } else {
+            panel[property] = ['width', 'height', 'quantity'].includes(property) ? 
+                parseFloat(value) || 0 : value;
+        }
+        updateCalculations();
+        if (panels.findIndex(p => p.id === panelId) === activePanelIndex) {
             updatePreview();
         }
+    }
+}
 
-        function addPanel() {
-            const newPanel = {
-                id: Date.now(),
-                width: 36,
-                height: 42,
-                quantity: 1,
-                thickness: '12',
-                glassType: 'tempered',
-                cornerType: 'square',
-                holes: []
-            };
-            panels.push(newPanel);
-            activePanelIndex = panels.length - 1;
-            renderPanelsList();
-            updateCalculations();
-            updatePreview();
-        }
-
-        function removePanel(panelId) {
-            if (panels.length <= 1) {
-                alert('You must have at least one panel.');
-                return;
-            }
-            
-            const panelIndex = panels.findIndex(p => p.id === panelId);
-            panels.splice(panelIndex, 1);
-            
-            if (activePanelIndex >= panels.length) {
-                activePanelIndex = panels.length - 1;
-            }
-            
-            renderPanelsList();
-            updateCalculations();
-            updatePreview();
-        }
-
-        function setActivePanel(panelIndex) {
-            activePanelIndex = panelIndex;
-            renderPanelsList();
-            updatePreview();
-        }
-
-        function updatePanel(panelId, property, value) {
-            const panel = panels.find(p => p.id === panelId);
-            if (panel) {
-                if (property === 'thickness') {
-                    panel[property] = value;
-                    // Update glass type options based on thickness
-                    if (value === '10') {
-                        panel.glassType = 'tempered';
-                    }
-                } else {
-                    panel[property] = ['width', 'height', 'quantity'].includes(property) ? 
-                        parseFloat(value) || 0 : value;
-                }
-                updateCalculations();
-                if (panels.findIndex(p => p.id === panelId) === activePanelIndex) {
-                    updatePreview();
-                }
-            }
-        }
-
-        function renderPanelsList() {
-            const panelsList = document.getElementById('panelsList');
-            
-            panelsList.innerHTML = panels.map((panel, index) => {
-                const isActive = index === activePanelIndex;
-                const activeClass = isActive ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50';
-                
-                return `
-                    <div class="border rounded-lg p-4 ${activeClass}" onclick="setActivePanel(${index})">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="font-bold text-lg">Panel ${index + 1} ${isActive ? '(Active)' : ''}</h3>
-                            <div class="flex gap-2">
-                                ${panels.length > 1 ? `<button onclick="event.stopPropagation(); removePanel(${panel.id})" class="px-2 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">Remove</button>` : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                            <div>
-                                <label class="block text-xs font-medium mb-1">Width (in)</label>
-                                <input type="number" value="${panel.width}" class="w-full p-1 border rounded text-sm" 
-                                       onchange="updatePanel(${panel.id}, 'width', this.value)" onclick="event.stopPropagation()">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1">Height (in)</label>
-                                <input type="number" value="${panel.height}" class="w-full p-1 border rounded text-sm" 
-                                       onchange="updatePanel(${panel.id}, 'height', this.value)" onclick="event.stopPropagation()">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1">Quantity</label>
-                                <input type="number" value="${panel.quantity}" min="1" class="w-full p-1 border rounded text-sm" 
-                                       onchange="updatePanel(${panel.id}, 'quantity', this.value)" onclick="event.stopPropagation()">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1">Thickness</label>
-                                <select class="w-full p-1 border rounded text-sm" 
-                                        onchange="updatePanel(${panel.id}, 'thickness', this.value)" onclick="event.stopPropagation()">
-                                    <option value="10" ${panel.thickness === '10' ? 'selected' : ''}>10mm</option>
-                                    <option value="12" ${panel.thickness === '12' ? 'selected' : ''}>12mm</option>
-                                    <option value="19" ${panel.thickness === '19' ? 'selected' : ''}>19mm</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3 mb-3">
-                            <div>
-                                <label class="block text-xs font-medium mb-1">Glass Type</label>
-                                <select class="w-full p-1 border rounded text-sm" 
-                                        onchange="updatePanel(${panel.id}, 'glassType', this.value)" onclick="event.stopPropagation()">
-                                    <option value="tempered" ${panel.glassType === 'tempered' ? 'selected' : ''}>Starphire Tempered</option>
-                                    ${panel.thickness !== '10' ? `<option value="laminated" ${panel.glassType === 'laminated' ? 'selected' : ''}>Starphire Laminated</option>` : ''}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1">Corners</label>
-                                <select class="w-full p-1 border rounded text-sm" 
-                                        onchange="updatePanel(${panel.id}, 'cornerType', this.value)" onclick="event.stopPropagation()">
-                                    <option value="square" ${panel.cornerType === 'square' ? 'selected' : ''}>Square</option>
-                                    <option value="rounded" ${panel.cornerType === 'rounded' ? 'selected' : ''}>Rounded (+$${cornerPrice * 4})</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-between items-center">
-                            <div class="text-sm">
-                                <span class="font-medium">${panel.holes.length} holes</span>
-                                ${isActive ? `
-                                    <button onclick="event.stopPropagation(); addHole()" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Add Hole</button>
-                                ` : ''}
-                            </div>
-                            <div class="text-sm font-medium">
-                                ${(panel.width * panel.height / 144).toFixed(1)} sq ft × ${panel.quantity}
-                            </div>
-                        </div>
-                        
-                        ${isActive && panel.holes.length > 0 ? `
-                            <div class="mt-3 space-y-1">
-                                ${panel.holes.map((hole, holeIndex) => `
-                                    <div class="flex items-center gap-2 p-1 bg-white rounded border">
-                                        <span class="text-xs w-12">Hole ${holeIndex + 1}:</span>
-                                        <input type="number" value="${hole.diameter}" step="0.125" min="0.25" max="3"
-                                               class="w-12 p-1 border rounded text-xs" placeholder="Dia"
-                                               onchange="updateHole(${hole.id}, 'diameter', this.value)" onclick="event.stopPropagation()">
-                                        <span class="text-xs">dia</span>
-                                        <input type="number" value="${hole.x}" step="0.125" min="0"
-                                               class="w-12 p-1 border rounded text-xs" placeholder="X"
-                                               onchange="updateHole(${hole.id}, 'x', this.value)" onclick="event.stopPropagation()">
-                                        <span class="text-xs">X</span>
-                                        <input type="number" value="${hole.y}" step="0.125" min="0"
-                                               class="w-12 p-1 border rounded text-xs" placeholder="Y"
-                                               onchange="updateHole(${hole.id}, 'y', this.value)" onclick="event.stopPropagation()">
-                                        <span class="text-xs">Y</span>
-                                        <button onclick="event.stopPropagation(); removeHole(${hole.id})" 
-                                                class="px-1 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">×</button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function addHole() {
-            const activePanel = panels[activePanelIndex];
-            const newHole = {
-                id: Date.now(),
-                diameter: 0.5,
-                x: 2,
-                y: 2
-            };
-            
-            activePanel.holes.push(newHole);
-            renderPanelsList();
-            updateCalculations();
-            updatePreview();
-        }
-
-        function removeHole(holeId) {
-            const activePanel = panels[activePanelIndex];
-            activePanel.holes = activePanel.holes.filter(hole => hole.id !== holeId);
-            renderPanelsList();
-            updateCalculations();
-            updatePreview();
-        }
-
-        function updateHole(holeId, property, value) {
-            const activePanel = panels[activePanelIndex];
-            const hole = activePanel.holes.find(h => h.id === holeId);
-            if (hole) {
-                hole[property] = parseFloat(value) || 0;
-                updateCalculations();
-                updatePreview();
-            }
-        }
-
-        function updatePreview() {
-            const panel = panels[activePanelIndex];
-            if (!panel) return;
-
-            document.getElementById('activePanelTitle').textContent = `(Panel ${activePanelIndex + 1})`;
-
-            const cornerText = panel.cornerType === 'rounded' ? 'Rounded Corners' : 'Square Corners';
-            document.getElementById('previewDimensions').textContent = `${panel.width}" × ${panel.height}"`;
-            document.getElementById('previewGlass').textContent = `${panel.thickness}mm Starphire ${panel.glassType}`;
-            document.getElementById('previewCorners').textContent = cornerText;
-
-            // Scale preview proportionally
-            const maxWidth = 200;
-            const maxHeight = 280;
-            const ratio = Math.min(maxWidth / panel.width, maxHeight / panel.height);
-            const previewWidth = panel.width * ratio;
-            const previewHeight = panel.height * ratio;
-
-            const preview = document.getElementById('glassPreview');
-            preview.style.width = `${previewWidth}px`;
-            preview.style.height = `${previewHeight}px`;
-
-            // Apply corner styling
-            if (panel.cornerType === 'rounded') {
-                preview.style.borderRadius = '12px';
-            } else {
-                preview.style.borderRadius = '0px';
-            }
-
-            // Update colors based on glass type
-            if (panel.glassType === 'laminated') {
-                preview.style.borderColor = '#10b981';
-                preview.className = preview.className.replace('border-blue-300', 'border-green-500');
-            } else {
-                preview.style.borderColor = '#3b82f6';
-                preview.className = preview.className.replace('border-green-500', 'border-blue-300');
-            }
-            
-            updateHolesPreview();
-        }
-
-        function updateHolesPreview() {
-            const panel = panels[activePanelIndex];
-            if (!panel) return;
-
-            const holesContainer = document.getElementById('holesContainer');
-            const preview = document.getElementById('glassPreview');
-            const previewWidth = parseFloat(preview.style.width) || 150;
-            const previewHeight = parseFloat(preview.style.height) || 200;
-            
-            const scaleX = previewWidth / panel.width;
-            const scaleY = previewHeight / panel.height;
-            
-            holesContainer.innerHTML = panel.holes.map(hole => {
-                // Convert from bottom-left origin to top-left (CSS) origin
-                const holeX = hole.x * scaleX;
-                const holeY = (panel.height - hole.y) * scaleY; // Flip Y coordinate
-                const holeDiameter = hole.diameter * Math.min(scaleX, scaleY);
-                
-                return `
-                    <div class="absolute bg-gray-800 rounded-full border border-gray-600" 
-                         style="
-                             left: ${holeX}px; 
-                             top: ${holeY}px; 
-                             width: ${holeDiameter}px; 
-                             height: ${holeDiameter}px;
-                             transform: translate(-50%, -50%);
-                         ">
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function updateCalculations() {
-            const customerState = document.getElementById('customerState').value.toUpperCase();
-            
-            let totalGlassCost = 0;
-            let totalCornerCost = 0;
-            let totalHoleCost = 0;
-            let panelBreakdowns = [];
-
-            panels.forEach((panel, index) => {
-                const sqft = (panel.width * panel.height) / 144;
-                const panelGlassCost = glassPrices[panel.thickness][panel.glassType] * sqft * panel.quantity;
-                
-                const roundedCorners = panel.cornerType === 'rounded' ? 4 : 0;
-                const panelCornerCost = roundedCorners * cornerPrice * panel.quantity;
-                
-                const panelHoleCost = panel.holes.length * holePrice * panel.quantity;
-
-                totalGlassCost += panelGlassCost;
-                totalCornerCost += panelCornerCost;
-                totalHoleCost += panelHoleCost;
-
-                panelBreakdowns.push({
-                    index: index + 1,
-                    sqft,
-                    quantity: panel.quantity,
-                    thickness: panel.thickness,
-                    glassType: panel.glassType,
-                    glassCost: panelGlassCost,
-                    cornerCost: panelCornerCost,
-                    holeCost: panelHoleCost,
-                    roundedCorners,
-                    holes: panel.holes.length
-                });
-            });
-            
-            let shippingFee = 250; // default
-            for (const [states, fee] of Object.entries(shippingRegions)) {
-                if (states.split(',').includes(customerState)) {
-                    shippingFee = fee;
-                    break;
-                }
-            }
-
-            const total = totalGlassCost + totalCornerCost + totalHoleCost + shippingFee;
-
-            // Build detailed breakdown
-            let priceBreakdownHTML = '';
-            
-            panelBreakdowns.forEach(panel => {
-                priceBreakdownHTML += `
-                    <div class="font-medium text-gray-800 mb-1">Panel ${panel.index}:</div>
-                    <div class="ml-2 mb-2">
-                        <div class="flex justify-between">
-                            <span>Glass (${panel.sqft.toFixed(2)} sq ft × ${panel.quantity})</span>
-                            <span>$${panel.glassCost.toFixed(2)}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 ml-2">
-                            ${panel.thickness}mm Starphire ${panel.glassType} @ $${glassPrices[panel.thickness][panel.glassType].toFixed(2)}/sq ft
-                        </div>
-                `;
-                
-                if (panel.cornerCost > 0) {
-                    priceBreakdownHTML += `
-                        <div class="flex justify-between">
-                            <span>Rounded corners (${panel.roundedCorners} × ${panel.quantity})</span>
-                            <span>$${panel.cornerCost.toFixed(2)}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 ml-2">
-                            ${panel.roundedCorners * panel.quantity} corners @ $${cornerPrice}/corner
-                        </div>
-                    `;
-                }
-                
-                if (panel.holeCost > 0) {
-                    priceBreakdownHTML += `
-                        <div class="flex justify-between">
-                            <span>Holes (${panel.holes} × ${panel.quantity})</span>
-                            <span>$${panel.holeCost.toFixed(2)}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 ml-2">
-                            ${panel.holes * panel.quantity} holes @ $${holePrice}/hole
-                        </div>
-                    `;
-                }
-                
-                priceBreakdownHTML += '</div>';
-            });
-            
-            priceBreakdownHTML += `
-                <div class="border-t pt-2 mt-2">
-                    <div class="flex justify-between">
-                        <span>Shipping${customerState ? ` (${customerState})` : ''}</span>
-                        <span>$${shippingFee.toFixed(2)}</span>
-                    </div>
-                    <div class="border-t pt-2 mt-2 flex justify-between font-bold text-lg">
-                        <span>Total</span>
-                        <span>$${total.toFixed(2)}</span>
+function renderPanelsList() {
+    const panelsList = document.getElementById('panelsList');
+    
+    panelsList.innerHTML = panels.map((panel, index) => {
+        const isActive = index === activePanelIndex;
+        const activeClass = isActive ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-gray-50';
+        
+        return `
+            <div class="border rounded-lg p-4 ${activeClass}" onclick="setActivePanel(${index})">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-lg">Panel ${index + 1} ${isActive ? '(Active)' : ''}</h3>
+                    <div class="flex gap-2">
+                        ${panels.length > 1 ? `<button onclick="event.stopPropagation(); removePanel(${panel.id})" class="px-2 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">Remove</button>` : ''}
                     </div>
                 </div>
-            `;
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-medium mb-1">Width (in)</label>
+                        <input type="number" value="${panel.width}" class="w-full p-1 border rounded text-sm" 
+                               onchange="updatePanel(${panel.id}, 'width', this.value)" onclick="event.stopPropagation()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1">Height (in)</label>
+                        <input type="number" value="${panel.height}" class="w-full p-1 border rounded text-sm" 
+                               onchange="updatePanel(${panel.id}, 'height', this.value)" onclick="event.stopPropagation()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1">Quantity</label>
+                        <input type="number" value="${panel.quantity}" min="1" class="w-full p-1 border rounded text-sm" 
+                               onchange="updatePanel(${panel.id}, 'quantity', this.value)" onclick="event.stopPropagation()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1">Thickness</label>
+                        <select class="w-full p-1 border rounded text-sm" 
+                                onchange="updatePanel(${panel.id}, 'thickness', this.value)" onclick="event.stopPropagation()">
+                            <option value="10" ${panel.thickness === '10' ? 'selected' : ''}>10mm</option>
+                            <option value="12" ${panel.thickness === '12' ? 'selected' : ''}>12mm</option>
+                            <option value="19" ${panel.thickness === '19' ? 'selected' : ''}>19mm</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs font-medium mb-1">Glass Type</label>
+                        <select class="w-full p-1 border rounded text-sm" 
+                                onchange="updatePanel(${panel.id}, 'glassType', this.value)" onclick="event.stopPropagation()">
+                            <option value="tempered" ${panel.glassType === 'tempered' ? 'selected' : ''}>Starphire Tempered</option>
+                            ${panel.thickness !== '10' ? `<option value="laminated" ${panel.glassType === 'laminated' ? 'selected' : ''}>Starphire Laminated</option>` : ''}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium mb-1">Corners</label>
+                        <select class="w-full p-1 border rounded text-sm" 
+                                onchange="updatePanel(${panel.id}, 'cornerType', this.value)" onclick="event.stopPropagation()">
+                            <option value="square" ${panel.cornerType === 'square' ? 'selected' : ''}>Square</option>
+                            <option value="rounded" ${panel.cornerType === 'rounded' ? 'selected' : ''}>Rounded (+$${cornerPrice * 4})</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <div class="text-sm">
+                        <span class="font-medium">${panel.holes.length} holes</span>
+                        ${isActive ? `
+                            <button onclick="event.stopPropagation(); addHole()" class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Add Hole</button>
+                        ` : ''}
+                    </div>
+                    <div class="text-sm font-medium">
+                        ${(panel.width * panel.height / 144).toFixed(1)} sq ft × ${panel.quantity}
+                    </div>
+                </div>
+                
+                ${isActive && panel.holes.length > 0 ? `
+                    <div class="mt-3 space-y-1">
+                        ${panel.holes.map((hole, holeIndex) => `
+                            <div class="flex items-center gap-2 p-1 bg-white rounded border">
+                                <span class="text-xs w-12">Hole ${holeIndex + 1}:</span>
+                                <input type="number" value="${hole.diameter}" step="0.125" min="0.25" max="3"
+                                       class="w-12 p-1 border rounded text-xs" placeholder="Dia"
+                                       onchange="updateHole(${hole.id}, 'diameter', this.value)" onclick="event.stopPropagation()">
+                                <span class="text-xs">dia</span>
+                                <input type="number" value="${hole.x}" step="0.125" min="0"
+                                       class="w-12 p-1 border rounded text-xs" placeholder="X"
+                                       onchange="updateHole(${hole.id}, 'x', this.value)" onclick="event.stopPropagation()">
+                                <span class="text-xs">X</span>
+                                <input type="number" value="${hole.y}" step="0.125" min="0"
+                                       class="w-12 p-1 border rounded text-xs" placeholder="Y"
+                                       onchange="updateHole(${hole.id}, 'y', this.value)" onclick="event.stopPropagation()">
+                                <span class="text-xs">Y</span>
+                                <button onclick="event.stopPropagation(); removeHole(${hole.id})" 
+                                        class="px-1 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600">×</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+}
 
-            document.getElementById('priceBreakdown').innerHTML = priceBreakdownHTML;
-            document.getElementById('totalPrice').textContent = `$${total.toFixed(2)}`;
+function addHole() {
+    const activePanel = panels[activePanelIndex];
+    const newHole = {
+        id: Date.now(),
+        diameter: 0.5,
+        x: 2,
+        y: 2
+    };
+    
+    activePanel.holes.push(newHole);
+    renderPanelsList();
+    updateCalculations();
+    updatePreview();
+}
+
+function removeHole(holeId) {
+    const activePanel = panels[activePanelIndex];
+    activePanel.holes = activePanel.holes.filter(hole => hole.id !== holeId);
+    renderPanelsList();
+    updateCalculations();
+    updatePreview();
+}
+
+function updateHole(holeId, property, value) {
+    const activePanel = panels[activePanelIndex];
+    const hole = activePanel.holes.find(h => h.id === holeId);
+    if (hole) {
+        hole[property] = parseFloat(value) || 0;
+        updateCalculations();
+        updatePreview();
+    }
+}
+
+function updatePreview() {
+    const panel = panels[activePanelIndex];
+    if (!panel) return;
+
+    document.getElementById('activePanelTitle').textContent = `(Panel ${activePanelIndex + 1})`;
+
+    const cornerText = panel.cornerType === 'rounded' ? 'Rounded Corners' : 'Square Corners';
+    document.getElementById('previewDimensions').textContent = `${panel.width}" × ${panel.height}"`;
+    document.getElementById('previewGlass').textContent = `${panel.thickness}mm Starphire ${panel.glassType}`;
+    document.getElementById('previewCorners').textContent = cornerText;
+
+    // Scale preview proportionally
+    const maxWidth = 200;
+    const maxHeight = 280;
+    const ratio = Math.min(maxWidth / panel.width, maxHeight / panel.height);
+    const previewWidth = panel.width * ratio;
+    const previewHeight = panel.height * ratio;
+
+    const preview = document.getElementById('glassPreview');
+    preview.style.width = `${previewWidth}px`;
+    preview.style.height = `${previewHeight}px`;
+
+    // Apply corner styling
+    if (panel.cornerType === 'rounded') {
+        preview.style.borderRadius = '12px';
+    } else {
+        preview.style.borderRadius = '0px';
+    }
+
+    // Update colors based on glass type
+    if (panel.glassType === 'laminated') {
+        preview.style.borderColor = '#10b981';
+        preview.className = preview.className.replace('border-blue-300', 'border-green-500');
+    } else {
+        preview.style.borderColor = '#3b82f6';
+        preview.className = preview.className.replace('border-green-500', 'border-blue-300');
+    }
+    
+    updateHolesPreview();
+}
+
+function updateHolesPreview() {
+    const panel = panels[activePanelIndex];
+    if (!panel) return;
+
+    const holesContainer = document.getElementById('holesContainer');
+    const preview = document.getElementById('glassPreview');
+    const previewWidth = parseFloat(preview.style.width) || 150;
+    const previewHeight = parseFloat(preview.style.height) || 200;
+    
+    const scaleX = previewWidth / panel.width;
+    const scaleY = previewHeight / panel.height;
+    
+    holesContainer.innerHTML = panel.holes.map(hole => {
+        // Convert from bottom-left origin to top-left (CSS) origin
+        const holeX = hole.x * scaleX;
+        const holeY = (panel.height - hole.y) * scaleY; // Flip Y coordinate
+        const holeDiameter = hole.diameter * Math.min(scaleX, scaleY);
+        
+        return `
+            <div class="absolute bg-gray-800 rounded-full border border-gray-600" 
+                 style="
+                     left: ${holeX}px; 
+                     top: ${holeY}px; 
+                     width: ${holeDiameter}px; 
+                     height: ${holeDiameter}px;
+                     transform: translate(-50%, -50%);
+                 ">
+            </div>
+        `;
+    }).join('');
+}
+
+function updateCalculations() {
+    const customerState = document.getElementById('customerState').value.toUpperCase();
+    
+    let totalGlassCost = 0;
+    let totalCornerCost = 0;
+    let totalHoleCost = 0;
+    let panelBreakdowns = [];
+
+    panels.forEach((panel, index) => {
+        const sqft = (panel.width * panel.height) / 144;
+        const panelGlassCost = glassPrices[panel.thickness][panel.glassType] * sqft * panel.quantity;
+        
+        const roundedCorners = panel.cornerType === 'rounded' ? 4 : 0;
+        const panelCornerCost = roundedCorners * cornerPrice * panel.quantity;
+        
+        const panelHoleCost = panel.holes.length * holePrice * panel.quantity;
+
+        totalGlassCost += panelGlassCost;
+        totalCornerCost += panelCornerCost;
+        totalHoleCost += panelHoleCost;
+
+        panelBreakdowns.push({
+            index: index + 1,
+            sqft,
+            quantity: panel.quantity,
+            thickness: panel.thickness,
+            glassType: panel.glassType,
+            glassCost: panelGlassCost,
+            cornerCost: panelCornerCost,
+            holeCost: panelHoleCost,
+            roundedCorners,
+            holes: panel.holes.length
+        });
+    });
+    
+    let shippingFee = 250; // default
+    for (const [states, fee] of Object.entries(shippingRegions)) {
+        if (states.split(',').includes(customerState)) {
+            shippingFee = fee;
+            break;
         }
+    }
 
-        function submitQuote() {
-            const name = document.getElementById('customerName').value;
-            const email = document.getElementById('customerEmail').value;
-            
-            if (!name || !email) {
-                alert('Please fill in your name and email address.');
-                return;
-            }
+    const total = totalGlassCost + totalCornerCost + totalHoleCost + shippingFee;
 
-            const city = document.getElementById('customerCity').value;
-            const state = document.getElementById('customerState').value;
-            const zip = document.getElementById('customerZip').value;
-            const total = document.getElementById('totalPrice').textContent;
+    // Build detailed breakdown
+    let priceBreakdownHTML = '';
+    
+    panelBreakdowns.forEach(panel => {
+        priceBreakdownHTML += `
+            <div class="font-medium text-gray-800 mb-1">Panel ${panel.index}:</div>
+            <div class="ml-2 mb-2">
+                <div class="flex justify-between">
+                    <span>Glass (${panel.sqft.toFixed(2)} sq ft × ${panel.quantity})</span>
+                    <span>$${panel.glassCost.toFixed(2)}</span>
+                </div>
+                <div class="text-xs text-gray-500 ml-2">
+                    ${panel.thickness}mm Starphire ${panel.glassType} @ $${glassPrices[panel.thickness][panel.glassType].toFixed(2)}/sq ft
+                </div>
+        `;
+        
+        if (panel.cornerCost > 0) {
+            priceBreakdownHTML += `
+                <div class="flex justify-between">
+                    <span>Rounded corners (${panel.roundedCorners} × ${panel.quantity})</span>
+                    <span>$${panel.cornerCost.toFixed(2)}</span>
+                </div>
+                <div class="text-xs text-gray-500 ml-2">
+                    ${panel.roundedCorners * panel.quantity} corners @ $${cornerPrice}/corner
+                </div>
+            `;
+        }
+        
+        if (panel.holeCost > 0) {
+            priceBreakdownHTML += `
+                <div class="flex justify-between">
+                    <span>Holes (${panel.holes} × ${panel.quantity})</span>
+                    <span>$${panel.holeCost.toFixed(2)}</span>
+                </div>
+                <div class="text-xs text-gray-500 ml-2">
+                    ${panel.holes * panel.quantity} holes @ $${holePrice}/hole
+                </div>
+            `;
+        }
+        
+        priceBreakdownHTML += '</div>';
+    });
+    
+    priceBreakdownHTML += `
+        <div class="border-t pt-2 mt-2">
+            <div class="flex justify-between">
+                <span>Shipping${customerState ? ` (${customerState})` : ''}</span>
+                <span>$${shippingFee.toFixed(2)}</span>
+            </div>
+            <div class="border-t pt-2 mt-2 flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>$${total.toFixed(2)}</span>
+            </div>
+        </div>
+    `;
 
-            let panelDetails = panels.map((panel, index) => {
-                let details = `Panel ${index + 1}:
+    document.getElementById('priceBreakdown').innerHTML = priceBreakdownHTML;
+    document.getElementById('totalPrice').textContent = `$${total.toFixed(2)}`;
+}
+
+function submitQuote() {
+    const name = document.getElementById('customerName').value;
+    const email = document.getElementById('customerEmail').value;
+    
+    if (!name || !email) {
+        alert('Please fill in your name and email address.');
+        return;
+    }
+
+    const city = document.getElementById('customerCity').value;
+    const state = document.getElementById('customerState').value;
+    const zip = document.getElementById('customerZip').value;
+    const total = document.getElementById('totalPrice').textContent;
+
+    let panelDetails = panels.map((panel, index) => {
+        let details = `Panel ${index + 1}:
   Size: ${panel.width}" × ${panel.height}"
   Quantity: ${panel.quantity}
   Glass: ${panel.thickness}mm Starphire ${panel.glassType}
   Corners: ${panel.cornerType}`;
 
-                if (panel.holes.length > 0) {
-                    details += '\n  Holes:';
-                    panel.holes.forEach((hole, holeIndex) => {
-                        details += `\n    Hole ${holeIndex + 1}: ${hole.diameter}" diameter at position ${hole.x}", ${hole.y}" (from bottom-left)`;
-                    });
-                }
-                return details;
-            }).join('\n\n');
+        if (panel.holes.length > 0) {
+            details += '\n  Holes:';
+            panel.holes.forEach((hole, holeIndex) => {
+                details += `\n    Hole ${holeIndex + 1}: ${hole.diameter}" diameter at position ${hole.x}", ${hole.y}" (from bottom-left)`;
+            });
+        }
+        return details;
+    }).join('\n\n');
 
-            const subject = `Glass Panel Quote Request - ${total}`;
-            const body = `Customer Information:
+    const subject = `Glass Panel Quote Request - ${total}`;
+    const body = `Customer Information:
 Name: ${name}
 Email: ${email}
 City: ${city}
@@ -678,105 +679,103 @@ Please provide a formal quote for the above specifications.
 
 Thank you!`;
 
-            // Try to open email client
-            const mailtoLink = `mailto:jj.johnson@viewrail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            
-            const tempLink = document.createElement('a');
-            tempLink.href = mailtoLink;
-            tempLink.style.display = 'none';
-            document.body.appendChild(tempLink);
-            tempLink.click();
-            document.body.removeChild(tempLink);
+    // Try to open email client
+    const mailtoLink = `mailto:jj.johnson@viewrail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    const tempLink = document.createElement('a');
+    tempLink.href = mailtoLink;
+    tempLink.style.display = 'none';
+    document.body.appendChild(tempLink);
+    tempLink.click();
+    document.body.removeChild(tempLink);
 
-            alert(`Quote request prepared!\n\nTotal: ${total}\n\nYour email client should open with the quote details.`);
-        }
+    alert(`Quote request prepared!\n\nTotal: ${total}\n\nYour email client should open with the quote details.`);
+}
 
-        // Admin functions
-        function showAdminLogin() {
-            document.getElementById('adminModal').classList.remove('hidden');
-        }
+// Admin functions
+function showAdminLogin() {
+    document.getElementById('adminModal').classList.remove('hidden');
+}
 
-        function hideAdminLogin() {
-            document.getElementById('adminModal').classList.add('hidden');
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('passwordError').classList.add('hidden');
-        }
+function hideAdminLogin() {
+    document.getElementById('adminModal').classList.add('hidden');
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('passwordError').classList.add('hidden');
+}
 
-        function loginAdmin() {
-            const password = document.getElementById('adminPassword').value;
-            if (password === 'ViewRail2024!') {
-                hideAdminLogin();
-                showAdminPanel();
-            } else {
-                document.getElementById('passwordError').classList.remove('hidden');
-                document.getElementById('adminPassword').value = '';
-            }
-        }
+function loginAdmin() {
+    const password = document.getElementById('adminPassword').value;
+    if (password === 'ViewRail2024!') {
+        hideAdminLogin();
+        showAdminPanel();
+    } else {
+        document.getElementById('passwordError').classList.remove('hidden');
+        document.getElementById('adminPassword').value = '';
+    }
+}
 
-        function showAdminPanel() {
-            document.getElementById('adminPanel').classList.remove('hidden');
-            
-            // Load current prices
-            document.getElementById('price-10-tempered').value = glassPrices['10'].tempered;
-            document.getElementById('price-12-tempered').value = glassPrices['12'].tempered;
-            document.getElementById('price-19-tempered').value = glassPrices['19'].tempered;
-            document.getElementById('price-12-laminated').value = glassPrices['12'].laminated;
-            document.getElementById('price-19-laminated').value = glassPrices['19'].laminated;
-            
-            document.getElementById('shipping-midwest').value = shippingRegions['IL,IN,IA,WI,MI,OH,MO,KS,NE'];
-            document.getElementById('shipping-west').value = shippingRegions['CA,OR,WA,NV,AZ,UT,CO,NM,WY,MT,ID'];
-            document.getElementById('shipping-southeast').value = shippingRegions['FL,GA,AL,MS,TN,KY,NC,SC,VA,WV'];
-            document.getElementById('shipping-northeast').value = shippingRegions['NY,PA,NJ,CT,MA,RI,VT,NH,ME,MD,DE'];
-            
-            document.getElementById('hole-price').value = holePrice;
-            document.getElementById('corner-price').value = cornerPrice;
-        }
+function showAdminPanel() {
+    document.getElementById('adminPanel').classList.remove('hidden');
+    
+    // Load current prices
+    document.getElementById('price-10-tempered').value = glassPrices['10'].tempered;
+    document.getElementById('price-12-tempered').value = glassPrices['12'].tempered;
+    document.getElementById('price-19-tempered').value = glassPrices['19'].tempered;
+    document.getElementById('price-12-laminated').value = glassPrices['12'].laminated;
+    document.getElementById('price-19-laminated').value = glassPrices['19'].laminated;
+    
+    document.getElementById('shipping-midwest').value = shippingRegions['IL,IN,IA,WI,MI,OH,MO,KS,NE'];
+    document.getElementById('shipping-west').value = shippingRegions['CA,OR,WA,NV,AZ,UT,CO,NM,WY,MT,ID'];
+    document.getElementById('shipping-southeast').value = shippingRegions['FL,GA,AL,MS,TN,KY,NC,SC,VA,WV'];
+    document.getElementById('shipping-northeast').value = shippingRegions['NY,PA,NJ,CT,MA,RI,VT,NH,ME,MD,DE'];
+    
+    document.getElementById('hole-price').value = holePrice;
+    document.getElementById('corner-price').value = cornerPrice;
+}
 
-        function logoutAdmin() {
-            document.getElementById('adminPanel').classList.add('hidden');
-        }
+function logoutAdmin() {
+    document.getElementById('adminPanel').classList.add('hidden');
+}
 
-        function updatePricing() {
-            glassPrices['10'].tempered = parseFloat(document.getElementById('price-10-tempered').value) || 0;
-            glassPrices['12'].tempered = parseFloat(document.getElementById('price-12-tempered').value) || 0;
-            glassPrices['19'].tempered = parseFloat(document.getElementById('price-19-tempered').value) || 0;
-            glassPrices['12'].laminated = parseFloat(document.getElementById('price-12-laminated').value) || 0;
-            glassPrices['19'].laminated = parseFloat(document.getElementById('price-19-laminated').value) || 0;
-            
-            updateCalculations();
-        }
+function updatePricing() {
+    glassPrices['10'].tempered = parseFloat(document.getElementById('price-10-tempered').value) || 0;
+    glassPrices['12'].tempered = parseFloat(document.getElementById('price-12-tempered').value) || 0;
+    glassPrices['19'].tempered = parseFloat(document.getElementById('price-19-tempered').value) || 0;
+    glassPrices['12'].laminated = parseFloat(document.getElementById('price-12-laminated').value) || 0;
+    glassPrices['19'].laminated = parseFloat(document.getElementById('price-19-laminated').value) || 0;
+    
+    updateCalculations();
+}
 
-        function updateShipping() {
-            shippingRegions['IL,IN,IA,WI,MI,OH,MO,KS,NE'] = parseFloat(document.getElementById('shipping-midwest').value) || 0;
-            shippingRegions['CA,OR,WA,NV,AZ,UT,CO,NM,WY,MT,ID'] = parseFloat(document.getElementById('shipping-west').value) || 0;
-            shippingRegions['FL,GA,AL,MS,TN,KY,NC,SC,VA,WV'] = parseFloat(document.getElementById('shipping-southeast').value) || 0;
-            shippingRegions['NY,PA,NJ,CT,MA,RI,VT,NH,ME,MD,DE'] = parseFloat(document.getElementById('shipping-northeast').value) || 0;
-            
-            updateCalculations();
-        }
+function updateShipping() {
+    shippingRegions['IL,IN,IA,WI,MI,OH,MO,KS,NE'] = parseFloat(document.getElementById('shipping-midwest').value) || 0;
+    shippingRegions['CA,OR,WA,NV,AZ,UT,CO,NM,WY,MT,ID'] = parseFloat(document.getElementById('shipping-west').value) || 0;
+    shippingRegions['FL,GA,AL,MS,TN,KY,NC,SC,VA,WV'] = parseFloat(document.getElementById('shipping-southeast').value) || 0;
+    shippingRegions['NY,PA,NJ,CT,MA,RI,VT,NH,ME,MD,DE'] = parseFloat(document.getElementById('shipping-northeast').value) || 0;
+    
+    updateCalculations();
+}
 
-        function updateHolePricing() {
-            holePrice = parseFloat(document.getElementById('hole-price').value) || 25;
-            updateCalculations();
-            renderPanelsList(); // Update the UI to show new hole prices
-        }
+function updateHolePricing() {
+    holePrice = parseFloat(document.getElementById('hole-price').value) || 25;
+    updateCalculations();
+    renderPanelsList(); // Update the UI to show new hole prices
+}
 
-        function updateCornerPricing() {
-            cornerPrice = parseFloat(document.getElementById('corner-price').value) || 50;
-            updateCalculations();
-            renderPanelsList(); // Update the UI to show new corner prices
-        }
+function updateCornerPricing() {
+    cornerPrice = parseFloat(document.getElementById('corner-price').value) || 50;
+    updateCalculations();
+    renderPanelsList(); // Update the UI to show new corner prices
+}
 
-        function saveConfig() {
-            document.getElementById('saveSuccess').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('saveSuccess').classList.add('hidden');
-            }, 3000);
-        }
+function saveConfig() {
+    document.getElementById('saveSuccess').classList.remove('hidden');
+    setTimeout(() => {
+        document.getElementById('saveSuccess').classList.add('hidden');
+    }, 3000);
+}
 
-        // Initialize
-        lucide.createIcons();
-        initializePanels();
-    </script>
-</body>
-</html>
+// Initialize
+lucide.createIcons();
+initializePanels();
+</script></body></html>
